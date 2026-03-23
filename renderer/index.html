@@ -1,0 +1,327 @@
+<!--
+==============================================================================
+  Fichier  : index.html
+  Projet   : SimpliDash (Electron)
+  Rôle     : Point d’entrée principal de l’interface desktop SimpliDash.
+             Ce fichier structure tous les écrans (Accueil, Outils, Commandes, Utilisateurs, Appareils)
+             ainsi que les popups/modales nécessaires à l’application.
+  Spécificités :
+    - Navigation gérée côté JS via "js/index.js" (affichage onglets, popups, etc)
+    - Toute la logique est externalisée (aucun script inline ici)
+    - Les modales sont cachées par défaut (display:none) et affichées dynamiquement
+    - Les id et classes sont pensés pour être manipulés facilement côté JS
+    - Respect du HTML5/CSS3 natif, pas de framework ou librairie externe ici
+==============================================================================
+-->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>SimpliDash - AMGM</title>
+  <!-- Lien vers la feuille de styles principale -->
+  <link rel="stylesheet" href="./style/style.css">
+</head>
+<body>
+  <!--
+  ============================================================================
+    BARRE DE NAVIGATION PRINCIPALE
+    - Changement d’onglet géré en JS (initTabs dans js/index.js)
+    - L’élément actif reçoit la classe .active
+  ============================================================================
+  -->
+  <nav>
+    <ul>
+      <li class="active" id="nav-home">Accueil</li>
+      <li id="nav-tools">Outils</li>
+      <li id="nav-orders">Commandes</li>
+      <li id="nav-users">Utilisateurs</li>
+      <li id="nav-devices">Appareils</li>
+    </ul>
+  </nav>
+
+  <!--
+  ============================================================================
+    ONGLET ACCUEIL
+    - Affiche les transactions récentes et les outils à réapprovisionner
+    - Conteneurs vides remplis dynamiquement en JS
+  ============================================================================
+  -->
+  <div id="tab-home" class="tab-content">
+    <h2>Dernières transactions de l'armoire :</h2>
+    <button id="refresh-raw-transactions">🔄 Rafraîchir</button>
+    <div id="raw-transactions-container"></div>
+
+    <h2 class="OutilReapro">Outils à réapprovisionner :</h2>
+    <button id="refresh-tools">🔄 Rafraîchir</button>
+    <div id="tools-table-container"></div>
+  </div>
+
+  <!--
+  ============================================================================
+    ONGLET OUTILS
+    - Recherche, création, filtres par appareil/catégorie/fournisseur, listing
+    - Toutes les données sont injectées en JS
+  ============================================================================
+  -->
+  <div id="tab-tools" class="tab-content" style="display:none;">
+    <h2>Liste des outils : </h2>
+
+    <!-- Barre de recherche outils avec suggestions live -->
+    <div id="tools-search-container" style="margin-bottom:1em; position:relative;">
+      <input
+        type="text"
+        id="search-tool-input"
+        class="orders-input"
+        placeholder="Recherche nom, réf, code barre…"
+        style="width:250px;"
+      >
+      <div
+        id="search-tool-suggestions"
+        style="
+          position:absolute;
+          top:100%;
+          left:0;
+          width:250px;
+          max-height:200px;
+          overflow-y:auto;
+          background:#fff;
+          border:1px solid #ccc;
+          z-index:1000;
+          display:none;
+        "
+      ></div>
+    </div>
+
+    <!-- Création d’un nouvel outil -->
+    <button id="create-tool-btn" class="orders-button">➕ Créer un outil</button>
+  
+    <!-- Filtres outils (appareil, catégorie, fournisseur, en stock) -->
+    <div class="tools-controls">
+      <label for="device-select">Appareil :</label>
+      <select id="device-select" class="tools-select"></select>
+    
+      <label for="filter-category">Catégorie :</label>
+      <select id="filter-category" class="tools-select">
+        <option value="all">Toutes</option>
+      </select>
+    
+      <label for="filter-supplier">Fournisseur :</label>
+      <select id="filter-supplier" class="tools-select">
+        <option value="all">Tous</option>
+      </select>
+    
+      <label for="filter-in-stock">
+        <input type="checkbox" id="filter-in-stock" />
+        Dans l’appareil
+      </label>
+    
+      <button id="refresh-tools-all" class="tools-button">🔄 Rafraîchir</button>
+    </div>
+    
+    <div id="alltools-table-container"></div>
+  </div>
+
+  <!--
+  ============================================================================
+    ONGLET COMMANDES
+    - Listing des commandes, tri, création, rafraîchissement
+    - Tableau injecté dynamiquement
+  ============================================================================
+  -->
+  <div id="tab-orders" class="tab-content" style="display:none;">
+    <h2>Liste des Commandes :</h2>
+    <div class="orders-controls">
+      <label for="sort-date" class="orders-label">Trier par date :</label>
+      <select id="sort-date" class="orders-select">
+        <option value="desc">Plus récents</option>
+        <option value="asc">Plus anciens</option>
+      </select>
+      <button id="refresh-orders" class="orders-button">🔄 Rafraîchir</button>
+      <button id="create-order-btn" class="orders-button">➕ Nouvelle commande</button>
+    </div>
+    <div id="orders-table-container"></div>
+  </div>
+
+  <!--
+  ============================================================================
+    ONGLET UTILISATEURS
+    - Listing, création et rafraîchissement des utilisateurs
+  ============================================================================
+  -->
+  <div id="tab-users" class="tab-content" style="display:none">
+    <h2>Liste des Utilisateurs :</h2>
+    <div class="users-controls">
+      <button id="refresh-users">🔄 Rafraîchir</button>
+      <button id="create-user-btn" class="users-button">➕ Créer un utilisateur</button>
+    </div>
+    <div id="users-table-container"></div>
+  </div>
+
+  <!--
+  ============================================================================
+    ONGLET APPAREILS
+    - Liste des armoires/appareils connectés
+  ============================================================================
+  -->
+  <div id="tab-devices" class="tab-content" style="display:none">
+    <h2>Appareils :</h2>
+    <button id="refresh-devices">🔄 Rafraîchir</button>
+    <div id="devices-table-container"></div>
+  </div>
+
+  <!--
+  ============================================================================
+    MODALES GÉNÉRIQUES (pop-up/overlay)
+    - Ordre : détail commande, date de livraison, saisie remises,
+      alertes personnalisées, confirmations, création/édition utilisateur
+    - Toujours cachées par défaut (display:none), affichées dynamiquement
+  ============================================================================
+  -->
+
+  <!-- Modal Détail Commande -->
+  <div id="order-detail-modal" class="modal" style="display:none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <button id="close-order-modal" class="modal-close">×</button>
+      <h2 id="detail-order-title"></h2>
+      <div id="order-detail-table-container"></div>
+      <div class="orders-detail-footer"> 
+        <span id="order-total">Total: 0 €</span>
+        <button id="save-order-changes" class="orders-button">Enregistrer</button>
+        <button id="cancel-order-changes" class="orders-button">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Date de livraison commande -->
+  <div id="delivery-date-modal" class="modal" style="display:none; position:fixed;top:0;left:0;
+  width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:20px;border-radius:8px;max-width:300px;width:100%;box-shadow:0 2px 10px rgba(0,0,0,0.2);">
+      <h2 style="margin-top:0;font-size:16px;">Date de livraison</h2>
+      <input id="delivery-date-input" type="date" class="orders-input" style="width:100%;margin:10px 0;" />
+      <div style="text-align:right;">
+        <button id="delivery-date-cancel" style="margin-right:8px;">Annuler</button>
+        <button id="delivery-date-confirm">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Saisie Remises (pour appliquer une remise à la commande) -->
+  <div id="discount-modal" class="modal" style="display:none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content" style="max-width:500px;">
+      <h2>Saisir les remises (%)</h2>
+      <div id="discount-table-container" style="max-height:300px;overflow:auto;margin-bottom:1em;"></div>
+      <div style="text-align:right;">
+        <button id="discount-cancel" class="orders-button">Annuler</button>
+        <button id="discount-confirm" class="orders-button">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Custom Alert (alerte personnalisée, text + bouton OK) -->
+  <div id="custom-alert" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center;">
+    <div style="background:white; padding:2em 2.5em; border-radius:12px; min-width:250px; text-align:center; box-shadow:0 2px 16px #0002;">
+      <div id="custom-alert-message" style="font-size:1.1em;"></div>
+      <button id="custom-alert-ok" style="margin-top:1em; padding:0.6em 1.2em; border-radius:6px; border:none; background:#ff6464; color:white; font-weight:bold; font-size:1em;">OK</button>
+    </div>
+  </div>
+
+  <!-- Modal Custom Confirm (popup de confirmation Oui/Non personnalisée) -->
+  <div id="custom-confirm" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center;">
+    <div style="background:white; padding:2em 2.5em; border-radius:12px; min-width:270px; text-align:center; box-shadow:0 2px 16px #0002;">
+      <div id="custom-confirm-message" style="font-size:1.1em;"></div>
+      <button id="custom-confirm-yes" style="margin:1em 1em 0 0; padding:0.6em 1.2em; border-radius:6px; border:none; background:#ff6464; color:white; font-weight:bold; font-size:1em;">Oui</button>
+      <button id="custom-confirm-no" style="margin:1em 0 0 1em; padding:0.6em 1.2em; border-radius:6px; border:none; background:#bcbcbc; color:#222; font-weight:bold; font-size:1em;">Non</button>
+    </div>
+  </div>
+
+  <!--
+  ============================================================================
+    MODALES UTILISATEURS : création/édition (affichées sur action)
+  ============================================================================
+  -->
+  <!-- Modal Création Utilisateur -->
+  <div id="create-user-modal" class="modal" style="display:none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <button id="close-create-user-modal" class="modal-close">×</button>
+      <h2>Créer un utilisateur</h2>
+      <div id="create-user-form">
+        <label>Login (name) :<br>
+          <input id="create-user-name" type="text" class="users-input" required>
+        </label><br>
+        <label>Mot de passe :<br>
+          <input id="create-user-password" type="password" class="users-input" required>
+        </label><br>
+        <label>Confirmation mot de passe :<br>
+          <input id="create-user-password-confirm" type="password" class="users-input" required>
+        </label><br>
+        <label>Prénom (userName) :<br>
+          <input id="create-user-firstname" type="text" class="users-input" required>
+        </label><br>
+        <label>Nom (userSurname) :<br>
+          <input id="create-user-lastname" type="text" class="users-input" required>
+        </label><br>
+        <label>Email :<br>
+          <input id="create-user-email" type="email" class="users-input" required>
+        </label><br>
+        <label>Groupe :<br>
+          <select id="create-user-group" class="users-select" required>
+            <!-- options remplies dynamiquement -->
+          </select>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button id="create-user-confirm" class="users-button">Créer</button>
+        <button id="create-user-cancel" class="users-button">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Édition Utilisateur -->
+  <div id="edit-user-modal" class="modal" style="display:none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <button id="close-edit-user-modal" class="modal-close">×</button>
+      <h2>Modifier un utilisateur</h2>
+      <div id="edit-user-form">
+        <!-- Note : pas de champ login (name) ici -->
+        <label>Mot de passe :<br>
+          <input id="edit-user-password" type="password" class="users-input" placeholder="Confirmez ou modifiez le mot de passe !" required>
+        </label><br>
+        <label>Confirmation mot de passe :<br>
+          <input id="edit-user-password-confirm" type="password" class="users-input" placeholder="Confirmez ou modifiez le mot de passe !" required>
+        </label><br>
+        <label>Prénom (userName) :<br>
+          <input id="edit-user-firstname" type="text" class="users-input" required>
+        </label><br>
+        <label>Nom (userSurname) :<br>
+          <input id="edit-user-lastname" type="text" class="users-input" required>
+        </label><br>
+        <label>Email :<br>
+          <input id="edit-user-email" type="email" class="users-input" required>
+        </label><br>
+        <label>Groupe :<br>
+          <select id="edit-user-group" class="users-select" required>
+            <!-- options remplies dynamiquement -->
+          </select>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button id="edit-user-save" class="users-button">Enregistrer</button>
+        <button id="edit-user-cancel" class="users-button">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+  ============================================================================
+    IMPORT DES MODULES JS
+    - Le renderer JS pilote toute la logique de l’app via ce point d’entrée
+  ============================================================================
+  -->
+  <script src="./js/index.js"></script>
+</body>
+</html>
