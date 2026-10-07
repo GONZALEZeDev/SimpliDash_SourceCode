@@ -7,6 +7,9 @@
 //  Remarques :
 //      - Gère le “single window” classique (fenêtre unique, relance sur macOS)
 //      - Les options webPreferences autorisent l’intégration Node (pas sécurisé en prod !)
+//        En attendant une refonte avec preload/IPC, l’exposition est limitée :
+//        DevTools désactivés en build, pas de nouvelles fenêtres, pas de navigation
+//        hors de l’app, et une CSP stricte sur les scripts dans index.html.
 // ============================================================================
 
 const { app, BrowserWindow } = require('electron');
@@ -23,8 +26,18 @@ function createWindow() {
     icon: path.join(__dirname, 'assets', 'icon', 'Logo_SimpliDash-removebg-preview.png'),
     webPreferences: {
       nodeIntegration: true,     // Permet require dans le renderer (⚠️ attention sécurité)
-      contextIsolation: false    // Accès direct au contexte Node (pour dev seulement)
+      contextIsolation: false,   // Accès direct au contexte Node (pour dev seulement)
+      devTools: !app.isPackaged  // Console inaccessible dans l’app distribuée (token visible dans les logs)
     }
+  });
+
+  // Aucune fenêtre secondaire (window.open, liens target="_blank") : avec l’intégration
+  // Node active, une page externe ouverte ici aurait accès à require().
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+  // Interdit toute navigation hors de la page de l’app (lien injecté, redirection…)
+  win.webContents.on('will-navigate', (event, url) => {
+    if (url !== win.webContents.getURL()) event.preventDefault();
   });
 
   // Charge la page principale de l’interface utilisateur (renderer)

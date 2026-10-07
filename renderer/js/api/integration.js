@@ -363,7 +363,6 @@ async function updateItem(id, payload) {
   console.group('[DEBUG][updateItem] Request');
   console.log('🆔 Item ID    →', id);
   console.log('URL          →', url);
-  console.log('HEADERS      →', headers);
   console.log('PAYLOAD      →', payload);
   console.groupEnd();
 
@@ -817,6 +816,7 @@ async function deleteItemFromPurchaseOrder(orderId, itemId) {
 //  EXPORTS : Toutes les fonctions utilisables par l’UI ou autres modules
 // ============================================================================
 module.exports = {
+  BASE_URL,
   fetchAllUsers,
   fetchAllUserGroups,
   fetchAllUserKeys,

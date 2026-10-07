@@ -17,7 +17,7 @@ if (autoTable && typeof autoTable.default === 'function') {
 // Modules axios pour les appels API et import  des fonctions d'autres fichiers
 const axios = require('axios');
 const { fetchToken, getAccessToken } = require('../auth');
-const { createPurchaseOrder, fetchAllDevices, addItemToPurchaseOrder, deletePurchaseOrder } = require('../api/integration');
+const { BASE_URL, createPurchaseOrder, fetchAllDevices, addItemToPurchaseOrder, deletePurchaseOrder } = require('../api/integration');
 const {fetchAllStockLocations} = require('../api/reporting');
 
 
@@ -171,7 +171,7 @@ function customConfirm(message, onYes, onNo) {
  */
 async function getPriceForItem(itemId) {
   if (!getAccessToken()) await fetchToken();
-  const url = `https://api.cribwise.com/integration/v1/integrationapi/Items/${itemId}`;
+  const url = `${BASE_URL}/Items/${encodeURIComponent(itemId)}`;
   const resp = await axios.get(url, {
       headers: { Authorization: `Bearer ${getAccessToken()}` }
   });
@@ -191,7 +191,7 @@ async function getPriceForItem(itemId) {
  */
 async function updateItemUnitPrice(itemId, newPrice) {
   if (!getAccessToken()) await fetchToken();
-  const url = `https://api.cribwise.com/integration/v1/integrationapi/Items/${itemId}`;
+  const url = `${BASE_URL}/Items/${encodeURIComponent(itemId)}`;
   const patchData = { vendorItem: { pricePerPiece: newPrice } };
   const resp = await axios.patch(url, patchData, {
       headers: { Authorization: `Bearer ${getAccessToken()}` }
